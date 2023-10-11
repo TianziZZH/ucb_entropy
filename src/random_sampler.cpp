@@ -136,9 +136,10 @@ void RandomIndicesSamplerWR::_InitState() {
 
 
 vector<vector<unsigned> > RandomIndicesSamplerWR::GetSampleArrays() {
+  std::cout << "GetSampleArrays start!";
   _uid = std::uniform_int_distribution<unsigned>();
   _urd = std::uniform_real_distribution<double>(0., 1.);
-  if (_random_type == SWR_UNIFORM) {
+  if (_random_type == SWR_UNIFORM) {   // 均匀采样，无放回
     for (unsigned i = 0; i < _sample_num; ++i) {
       unsigned count = 0;
       unsigned count_selected = 0;
@@ -154,7 +155,7 @@ vector<vector<unsigned> > RandomIndicesSamplerWR::GetSampleArrays() {
         }
       }
     }
-  } else if (_random_type == GRID) {
+  } else if (_random_type == GRID) {   //  固定间隔采样，采样点数/总点数 = 间隔 ，
     unsigned gap = _pop_size / _sample_size;
     unsigned offset = gap / _sample_num;
     for (unsigned i = 0; i < _sample_num; ++i) {

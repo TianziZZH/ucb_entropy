@@ -16,6 +16,13 @@ using std::vector;
 
 const unsigned DISPLAY_PRECISION = 6;
 
+struct entropyInfos{
+  std::string imageName;
+  double sampen2d;
+  double a_norm;
+  double b_norm;
+};
+
 template <typename T,
           typename =
               typename std::enable_if<std::is_arithmetic<T>::value, T>::type>
@@ -48,6 +55,10 @@ public:
                                   width, height, moving_step_size,
                                   dilation_factor, output_level) {}
   virtual ~SampleEntropyCalculator2D() {}
+  entropyInfos get_result(string image_name){
+    entropyInfos e = {image_name, get_entropy(), get_a_norm(), get_b_norm()};
+    return e;
+  }
   virtual std::string get_result_str() {
     if (!_computed)
       ComputeSampleEntropy();
@@ -59,7 +70,7 @@ public:
        << "\tsampen2d: " << get_entropy() << "\n"
        << "\ta (norm): " << get_a_norm() << ", b (norm): " << get_b_norm()
        << "\n"
-       << "\ttime: " << std::scientific << _elapsed_seconds << "\n";
+       << "\ttime: " << _elapsed_seconds << "\n";
     if (_output_level >= Info) {
       std::cout << "[INFO] a: " << _a << ", b: " << _b << std::endl;
     }
@@ -265,6 +276,12 @@ public:
   double get_err_entropy() { return get_entropy() - _real_entropy; }
   double get_err_a() { return get_a_norm() - _real_a_norm; }
   double get_err_b() { return get_b_norm() - _real_b_norm; }
+
+  entropyInfos get_result(string image_name){
+    entropyInfos e = {image_name, get_entropy(), get_a_norm(), get_b_norm()};
+    return e;
+  }
+
   std::string get_result_str() override {
     std::stringstream ss;
     ss.precision(DISPLAY_PRECISION);
@@ -290,7 +307,7 @@ public:
     }
     return ss.str();
   }
-
+  
 protected:
   const unsigned _sample_size;
   const unsigned _sample_num;
@@ -392,16 +409,17 @@ void SampleEntropyCalculator2DDirect<T>::_ComputeSampleEntropy() {
 
 template <typename T>
 void SampleEntropyCalculator2DSamplingDirect<T>::_ComputeSampleEntropy() {
+  std::cout << "SampleEntropyCalculator2DSamplingDirect start !\n";
   unsigned num_templates = _num_steps_x * _num_steps_y;
   RandomIndicesSamplerWR sampler(num_templates, _sample_size, _sample_num,
                                  RandomType::SWR_UNIFORM, _random);
-  const auto random_indices_array = sampler.GetSampleArrays();
+  const auto random_indices_array = sampler.GetSampleArrays();   // 二维数组，N_0 * N_1
   _a_vec.clear();
   _b_vec.clear();
   for (unsigned sample_i = 0; sample_i < random_indices_array.size(); ++sample_i) {
     const auto& random_indices = random_indices_array[sample_i];
     std::vector<std::array<unsigned, 2> > random_indices_xy;
-    for (auto index: random_indices) {
+    for (auto index: random_indices) {  // 二维样本熵，一维样本熵采样得到转换为二维坐标
       random_indices_xy.push_back({_moving_step_size * (index / _num_steps_x),
                                    _moving_step_size * (index % _num_steps_x)});
     }
@@ -410,6 +428,7 @@ void SampleEntropyCalculator2DSamplingDirect<T>::_ComputeSampleEntropy() {
     for (unsigned i = 0; i < _sample_size - 1; ++i) {
       const auto& index_xy = random_indices_xy[i];
       for (unsigned j = i + 1; j < _sample_size; ++j) {
+        try{
         const auto& index_xy2 = random_indices_xy[j];
         if (_IsMatchedK(index_xy[0], index_xy[1], index_xy2[0], index_xy2[1])) {
           ++b;
@@ -417,11 +436,48 @@ void SampleEntropyCalculator2DSamplingDirect<T>::_ComputeSampleEntropy() {
             ++a;
           }
         }
+        }
+        catch(...){
+          std::cout << "异常" << std::endl;
+        }
+
       }
     }
     _a_vec.push_back(a);
     _b_vec.push_back(b);
   }
+
+  // unsigned num_templates = _num_steps_x * _num_steps_y;
+  // RandomIndicesSamplerWR sampler(num_templates, _sample_size, _sample_num,
+  //                                RandomType::SWR_UNIFORM, _random);
+  // const auto random_indices_array = sampler.GetSampleArrays();   // 二维数组，N_0 * N_1
+  // _a_vec.clear();
+  // _b_vec.clear();
+  // for (unsigned sample_i = 0; sample_i < random_indices_array.size(); ++sample_i) {
+  //   const auto& random_indices = random_indices_array[sample_i];
+  //   std::vector<std::array<unsigned, 2> > random_indices_xy;
+  //   for (auto index: random_indices) {  // 二维样本熵，一维样本熵采样得到转换为二维坐标
+  //     random_indices_xy.push_back({_moving_step_size * (index / _num_steps_x),
+  //                                  _moving_step_size * (index % _num_steps_x)});
+  //   }
+  //   long long a = 0;
+  //   long long b = 0;
+  //   for (unsigned i = 0; i < _sample_size - 1; ++i) {
+  //     const auto& index_xy = random_indices_xy[i];
+  //     for (unsigned j = i + 1; j < _sample_size; ++j) {
+  //       const auto& index_xy2 = random_indices_xy[j];
+  //       if (_IsMatchedK(index_xy[0], index_xy[1], index_xy2[0], index_xy2[1])) {
+  //         ++b;
+  //         if (_IsMatchedNext(index_xy[0], index_xy[1], index_xy2[0], index_xy2[1])) {
+  //           ++a;
+  //         }
+  //       }
+  //     }
+  //   }
+  //   _a_vec.push_back(a);
+  //   _b_vec.push_back(b);
+  // }
+
 }
 } // namespace sampen
 

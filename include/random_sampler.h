@@ -75,6 +75,7 @@ public:
       : _pop_size(pop_size), _sample_size(sample_size), _sample_num(sample_num),
         _samples(sample_num, vector<unsigned>(sample_size)),
         _random_type(random_type), _real_random(real_random) {
+    std::cout << "RandomIndicesSamplerWR start !";
     if (random_type != GRID && random_type != SWR_UNIFORM) {
       MSG_ERROR(-1, "Invalid random type for sampling without replacement.\n");
     }

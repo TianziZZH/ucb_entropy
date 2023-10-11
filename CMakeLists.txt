@@ -7,6 +7,9 @@ set(APP_NAME fast_sampen)
 set(LIB_NAME sampen)
 set(CMAKE_CXX_STANDARD 11)
 
+set(CMAKE_BUILD_TYPE DEBUG)
+add_definitions(-g)
+
 option(PACKAGE_TESTS "Build the tests" on)
 
 set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -DDEBUG")

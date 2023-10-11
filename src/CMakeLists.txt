@@ -14,6 +14,9 @@ add_library(${LIB_NAME} SHARED ${CPP_LIST})
 target_link_libraries(${LIB_NAME} GSL::gsl GSL::gslcblas)
 target_include_directories(${LIB_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
+set(CMAKE_BUILD_TYPE DEBUG)
+add_definitions(-g)
+
 add_executable(${APP_NAME} fast_sampen.cpp)
 target_link_libraries(${APP_NAME} ${LIB_NAME})
 
@@ -27,7 +30,20 @@ message(INFO "MAGICKPP_INCLUDE_DIRS: ${MAGICKPP_INCLUDE_DIRS}")
 target_include_directories(sampen2d PUBLIC ${MAGICKPP_INCLUDE_DIRS})
 target_link_libraries(sampen2d sampen ${MAGICKPP_LINK_LIBRARIES})
 
-install(TARGETS ${LIB_NAME} ${APP_NAME} sampen2d experiment_n0n1
+# install(TARGETS ${LIB_NAME} ${APP_NAME} sampen2d experiment_n0n1
+# 	LIBRARY DESTINATION lib
+# 	RUNTIME DESTINATION bin
+# 	PUBLIC_HEADER DESTINATION include)
+
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(MAGICKPP REQUIRED Magick++)
+add_executable(sampen2d_batch sampen2d_batch.cpp)
+message(INFO "MAGICKPP_INCLUDE_DIRS: ${MAGICKPP_INCLUDE_DIRS}")
+target_include_directories(sampen2d_batch PUBLIC ${MAGICKPP_INCLUDE_DIRS})
+target_link_libraries(sampen2d_batch sampen ${MAGICKPP_LINK_LIBRARIES})
+
+install(TARGETS ${LIB_NAME} ${APP_NAME} sampen2d experiment_n0n1 sampen2d_batch
 	LIBRARY DESTINATION lib
 	RUNTIME DESTINATION bin
 	PUBLIC_HEADER DESTINATION include)
